@@ -1,0 +1,64 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Encryption Example</title>
+    <script type="text/javascript" src="sjcl.js"></script>
+    <script type="text/javascript" src="encrypt.js"></script>
+    <script type="text/javascript">
+
+        /* Use server-side code to fill this with a random 256 bit hex string. */
+        var entropy = "0000000000000000000000000000000000000000000000000000000000000000";
+        sjcl.random.addEntropy(entropy, entropy.length * 4, "server");
+
+        /* Collect entropy from mouse movements and key-presses */
+        try {
+            sjcl.random.startCollectors();
+        } catch (e) {
+            var value = window.prompt(
+                "Entropy collectors failed. Please type randomly.", 
+                ""
+            );
+            if (value !== null && value !== "") {
+                sjcl.random.addEntropy(value, 0, "human");
+            } else {
+                /* If you're really paranoid, you can fail hard here */
+            }
+        }
+
+        function encryptBox() {
+            try {
+                var password = document.getElementById("password").value;
+                var text = document.getElementById("text").value;
+                var ciphertext = encrypt.encrypt(password, text);
+                document.getElementById("text").value = ciphertext;
+            } catch (e) {
+                alert(e);
+            }
+        }
+
+        function decryptBox() {
+            try {
+                var password = document.getElementById("password").value;
+                var text = document.getElementById("text").value;
+                var plaintext = encrypt.decrypt(password, text);
+                document.getElementById("text").value = plaintext;
+            } catch (e) {
+                if (e.constructor == sjcl.exception.corrupt) {
+                    alert('Wrong password or corrupted/invalid ciphertext.');
+                } else {
+                    alert(e);
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <form>
+        <p>Enter the text you want to encrypt or decrypt:</p>
+        <textarea type="text" name="text" id="text" rows="30" cols="80" style="border: solid black 1px;"></textarea>
+        <br /><br />
+        Password: <input type="password" name="password" id="password" value="" />
+        <input type="button" name="encrypt" value="Encrypt" onclick="encryptBox()" />
+        <input type="button" name="decrypt" value="Decrypt" onclick="decryptBox()" />
+    </form>
+</body>
